@@ -1,3 +1,13 @@
+"""Two async loops. Why?
+
+This module solves a problem: if an async server is running but doesn't
+want to be touched, how do you do async programming?
+
+The solution is to start another async loop and put it in a thread.
+Now you have to consider race conditions between loops but not within,
+so something has been achieved.
+"""
+
 import asyncio
 
 from functools import partial
@@ -39,19 +49,11 @@ def loop_in_thread(loop):
     loop.run_until_complete(point_production())
 
 loop = asyncio.new_event_loop()
-
-#This background threading of an asyncio loop is a really nice organization.
-#It is not necessary here but other tools require an asyncio loop
-#but so does bokeh 5.0+ so there is a conflict that is resolved here.
-#The fact that this works is probably also the solution for nearly
-#every async upgrade headache python 3.4,5,6 -> 3.7
-#The lock works great in this environment!
 t = threading.Thread(target=loop_in_thread, args=(loop,))
 t.start()
 
 p = figure(x_range=[0, 1], y_range=[0,1], sizing_mode='stretch_both')
 l = p.circle(x='x', y='y', source=source)
 p.toolbar.logo = None
-#, output_backend="webgl"
 doc.add_root(p)
 
